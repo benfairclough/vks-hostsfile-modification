@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hostfile-injector-workaround
+  namespace: kube-system
+  labels:
+    app: hostfile-injector
+spec:
+  selector:
+    matchLabels:
+      app: hostfile-injector
+  template:
+    metadata:
+      labels:
+        app: hostfile-injector
+    spec:
+      hostPID: true
+      hostNetwork: true
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      initContainers:
+      - name: inject-hosts
+        image: alpine:3.18
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # CONFIGURATION: Set your IP and Hostname here
+            TARGET_IP="10.10.10.35"
+            TARGET_HOST="harbor"
+            
+            echo "Starting /etc/hosts injection..."
+            
+            # Check if entry already exists to avoid duplication
+            if grep -q "$TARGET_HOST" /host/etc/hosts; then
+              echo "Entry for $TARGET_HOST already exists."
+            else
+              echo "Injecting $TARGET_IP $TARGET_HOST into /etc/hosts"
+              echo "$TARGET_IP $TARGET_HOST" >> /host/etc/hosts
+            fi
+        volumeMounts:
+        - name: host-etc
+          mountPath: /host/etc
+      containers:
+      - name: pause
+        image: registry.k8s.io/pause:3.9
+        resources:
+          requests:
+            cpu: "1m"
+            memory: "10Mi"
+      volumes:
+      - name: host-etc
+        hostPath:
+          path: /etc
+          type: Directory
