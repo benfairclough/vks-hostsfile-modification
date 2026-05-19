@@ -26,8 +26,8 @@ spec:
         args:
           - |
             # CONFIGURATION: Set your IP and Hostname here
-            TARGET_IP="10.10.10.35"
-            TARGET_HOST="harbor"
+            TARGET_IP="IP_HERE"
+            TARGET_HOST="HOSTNAMEHERE"
             
             echo "Starting /etc/hosts injection..."
             
